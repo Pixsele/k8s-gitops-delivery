@@ -1,0 +1,41 @@
+appA:
+  name: app-a
+  replicas: 1
+  nodeSelector: {}
+  image: app-a
+  tag: latest
+  imagePolicy: Never
+  interval: "5"
+  env:
+    - name: POD
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+    - name: NODE
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
+
+appB:
+  name: app-b
+  replicas: 1
+  nodeSelector:
+    kubernetes.io/hostname: minikube-m03
+  image: app-b
+  tag: latest
+  imagePolicy: Never
+  service:
+    name: app-b
+    type: ClusterIP
+    port: 8080
+  env:
+    - name: PORT
+      value: "8080"
+    - name: POD
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+    - name: NODE
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName

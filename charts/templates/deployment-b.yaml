@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.appB.name }}
+  labels:
+    app: {{ .Values.appB.name }}
+spec:
+  replicas: {{ .Values.appB.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.appB.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appB.name }}
+    spec:
+      {{- with .Values.appB.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Values.appB.name }}
+          image: "{{ .Values.appB.image }}:{{ .Values.appB.tag }}"
+          imagePullPolicy: {{ .Values.appB.imagePolicy }}
+          ports:
+            - containerPort: {{ .Values.appB.service.port }}
+          {{- with  .Values.appB.env }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
