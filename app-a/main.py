@@ -1,6 +1,6 @@
 import os
 import time
-import urllib
+import urllib.request
 
 URL = os.getenv("SERVER_URL", "http://localhost:8080")
 INTERVAL = int(os.getenv("INTERVAL", 5))
