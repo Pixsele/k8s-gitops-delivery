@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.appA.name }}-configmap
+data:
+  INTERVAL: {{ .Values.appA.interval | quote }}
+  SERVER_URL: "http://{{ .Values.appB.service.name }}:{{ .Values.appB.service.port }}"
