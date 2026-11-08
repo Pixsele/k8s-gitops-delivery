@@ -2,6 +2,7 @@ stages:
   - lint-test
   - build
   - publish
+  - update-manifest
 
 default:
   tags:
@@ -79,3 +80,18 @@ publish-app-b-job:
   needs:
     - build-app-b-job
   resource_group: registry-push
+
+update-tags-job:
+  stage: update-manifest
+  image: alpine:3.24
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  script:
+    - |
+      apk add --no-cache git yq
+      git config user.name "Git CI"
+      git config user.email "ci@kerro.space"
+      yq -i ".appA.tag = \"$CI_COMMIT_SHORT_SHA\" | .appB.tag = \"$CI_COMMIT_SHORT_SHA\"" charts/values-ci.yaml
+      git add charts/values-ci.yaml
+      git commit -m "ci: update image tag [skip ci]" || exit 0
+      git push "https://oauth2:${GITLAB_PUSH_TOKEN}@gitlab.home.kerro.space/${CI_PROJECT_PATH}.git" HEAD:$CI_DEFAULT_BRANCH

@@ -1,10 +1,13 @@
+imagePullSecrets:
+  - name: regcred
+
 appA:
   name: app-a
   replicas: 1
   nodeSelector: {}
-  image: app-a
+  image: registry.home.kerro.space/pixsele/k8s-gitops-delivery/app-a
   tag: latest
-  imagePolicy: Never
+  imagePolicy: IfNotPresent
   interval: "5"
   env:
     - name: POD
@@ -21,9 +24,9 @@ appB:
   replicas: 1
   nodeSelector:
     kubernetes.io/hostname: minikube-m03
-  image: app-b
+  image: registry.home.kerro.space/pixsele/k8s-gitops-delivery/app-b
   tag: latest
-  imagePolicy: Never
+  imagePolicy: IfNotPresent
   service:
     name: app-b
     type: ClusterIP
