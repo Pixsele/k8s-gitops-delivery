@@ -1,0 +1,81 @@
+stages:
+  - lint-test
+  - build
+  - publish
+
+default:
+  tags:
+    - shared
+
+variables:
+  IMAGE_TAG: $CI_COMMIT_SHORT_SHA
+
+lint-job:
+  stage: lint-test
+  image:
+    name: alpine/helm:3.16.2
+    entrypoint: [""]
+  script:
+     - helm lint ./charts
+
+.smoke-test:
+  stage: lint-test
+  image:
+    name: hadolint/hadolint:v2.15.1-alpine
+  script:
+    - hadolint "${DOCKER_DIR}/Dockerfile"
+
+smoke-app-a-job:
+  extends: .smoke-test
+  variables:
+    DOCKER_DIR: app-a
+
+smoke-app-b-job:
+  extends: .smoke-test
+  variables:
+    DOCKER_DIR: app-b
+
+
+.build-image:
+  stage: build
+  image: docker:27-cli
+  script:
+    - docker build -t "$CI_REGISTRY_IMAGE/$IMAGE_NAME:$IMAGE_TAG" "$IMAGE_NAME"
+
+build-app-a-job:
+  extends: .build-image
+  variables:
+    IMAGE_NAME: app-a
+
+build-app-b-job:
+  extends: .build-image
+  variables:
+    IMAGE_NAME: app-b
+
+.publish-image:
+  stage: publish
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
+  script:
+    - docker push "$CI_REGISTRY_IMAGE/$IMAGE_NAME:$IMAGE_TAG"
+    - |
+      if [ "$CI_COMMIT_BRANCH" = "$CI_DEFAULT_BRANCH" ]; then
+        docker tag "$CI_REGISTRY_IMAGE/$IMAGE_NAME:$IMAGE_TAG" "$CI_REGISTRY_IMAGE/$IMAGE_NAME:latest"
+        docker push "$CI_REGISTRY_IMAGE/$IMAGE_NAME:latest"
+      fi
+
+publish-app-a-job:
+  extends: .publish-image
+  variables:
+    IMAGE_NAME: app-a
+  needs:
+    - build-app-a-job
+  resource_group: registry-push
+
+publish-app-b-job:
+  extends: .publish-image
+  variables:
+    IMAGE_NAME: app-b
+  needs:
+    - build-app-b-job
+  resource_group: registry-push
